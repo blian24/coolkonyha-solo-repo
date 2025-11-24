@@ -3,6 +3,9 @@
 Van egy ügyfelem, aki külföldről importált termékeket forgalmaz. A termékek számára nem állnak rendelkezésre helyi raktárban, azokat mindig egy külsős raktárból szállíttattja a vele szerződésben álló szállító cégekkel közvetlenül a megrendelőhöz. Az ügyfelem (továbbiakban CK) emailben tartja a kapcsolatot az ügyfeleivel és a teljes üzleti folyamat emailes kommunikáción zajlik az érdeklődéstől a megrendelésen át a teljesítésig, beleértve az utólagos kommunikációt.
 CK cégében egy ember dolgozik, és alapvető, Google ökoszisztémát használ a cégében mindenre.
 
+### 1.1 Rendelkezésre álló erőforrások
+CK Google ökoszisztémában dolgozik. A fő kommunikációs eszköze a GMail, az információit Google Drive-on tárolt dokumentumokban tárolja.
+
 ## 2. Probléma leírása
 * CK egyedül dolgozik a cégben, és túl sok a munka.
 * Mivel nagyon sok az érdeklődés, megrendelés és a feladat, és mivel CK nem használ semmilyen ügyviteli rendszert, nehéz követnie, hogy melyik ügyfele ügymenete éppen hol tart.
@@ -73,6 +76,22 @@ CK cégében egy ember dolgozik, és alapvető, Google ökoszisztémát használ
 
 A csapat naprakész minden ügymenetről, tanácsokat ad, beszámolókat készít, napi teendők listáját készíti el, kérdésekre válaszol.
 
+## 3.3 Technikai Megvalósítás (Architecture) 
+### 3.3.1 Felhasználói Felület (UI) 
+* A rendszer felhasználói felületét **Python Streamlit** keretrendszerben kell elkészíteni. 
+* Ez biztosítja a "Chat-first" élményt a Team Lead Agenttel, illetve a riportok vizuális megjelenítését. 
+* A felületnek modernnek, letisztultnak kell lennie, dashboard jelleggel. 
+* **Költség:** A megoldásnak 100%-ban ingyenes technológiákra kell épülnie (Localhost futtatás).
+
+### 3.3.2 Adattárolás és Backend 
+* **Adatbázis:** Az Agentek minden strukturált adatot (státuszok, logok) egy központi **Google Spreadsheetben** tárolnak. 
+* **Dokumentumok:** A generált fájlok (pdf, docx) a Google Drive megfelelő mappáiba kerülnek. 
+* **Kapcsolat:** Az alkalmazás Google Service Accounton vagy OAuth2 kliensen keresztül kommunikál a Drive/Gmail API-val.
+
+### 3.3.3 Biztonság 
+* Mivel az alkalmazás helyi gépen fut, de érzékeny adatokat kezel, egy **Basic Auth** (felhasználónév/jelszó) beléptetést kell implementálni a Streamlit alkalmazás indításakor. 
+* A jelszó hash-jét a secrets.toml fájlban vagy környezeti változóban kell tárolni.
+
 ## 4. Feladat leírása
 
 A csapat naponta elvégzi a következő feladatokat: 
@@ -83,7 +102,6 @@ A csapat naponta elvégzi a következő feladatokat:
 * Megállapítja a nyitott ügymentekhez tartozó következő feladatokat, amiket el kell végezni. Jelentést ad azokról az ügymenetekről, amik blokkolva vannak valami miatt, vagy várakoznak valamire, és ezeknél az ügymeneteknél megállapítja a blokkoló tényezőt is, vagy azt, hogy mire várakozik. 
 * Minden jelentésnél és kommunikációnál szigorúan ügyel arra, hogy ügyfelenként és azon belül ügymenetenként rendszerezve készítse el az átadandó információkat, hogy azok könnyen követhetőek legyenek. Hasonlóan jár ez a dokumentációk készítésénél is.
 
-## Tisztázandó kérdések:
-* **1. Beszállítói kapcsolat tartás:** Hogyan tartja CK a kapcsolatot a szállítmányozó cégekkel és a termék forgalmazójával, akitől CK beszerzi a megrendelt árut?
 
-Egy AI Agentek által vezérelt alkalmazást akarok felépíteni. Van egy Gmail fiók, amiben (...)
+
+
