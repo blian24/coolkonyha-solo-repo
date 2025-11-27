@@ -197,9 +197,6 @@ A rendszer telepítésekor az alábbi standard folyamatot kell alapértelmezettk
 
 **Szabály:** Az Elemző Agent minden ügyet ezen a létrán próbál elhelyezni. Ha egy email nem illik a sorba, a "Kivételkezelés" státuszba teszi, és jelzi CK-nak.
 
-## 7. Alapértelmezett Üzleti Folyamat és Státuszlogika (Workflow Engine)
-A rendszer telepítésekor az alábbi folyamatot kell alapértelmezettként kezelni. A folyamat definícióját és az átmeneti szabályokat a rendszernek a `workflow.json` konfigurációs fájlban kell tárolnia, hogy azok később módosíthatóak legyenek.
-
 ### 7.1 Folyamat Vizualizáció (Mermaid)
 Az Agentnek az alábbi diagram alapján kell felépítenie a logikát:
 
