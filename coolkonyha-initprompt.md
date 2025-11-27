@@ -28,7 +28,14 @@ CK Google ökoszisztémában dolgozik. A fő kommunikációs eszköze a GMail, a
 
 #### 3.1.1.1 Adatkezelő Agent (Data Handler)
 * Kezeli a Google API-kat (Gmail olvasás, Drive fájlkezelés, Sheet írás/olvasás).
-* Rendszerezi a bejövő adatokat a központi adatbázisban (Google Sheet).
+* **Adatgazdagítás (Data Enrichment):**
+    * Minden bejövő emailnél és ügymenetnél automatikusan kikeresi a "Master Data Database"-ből a kapcsolódó Ügyfél és Termék részletes adatait.
+    * Ha új, ismeretlen email címet talál, javaslatot tesz a Team Leadnek az új ügyfél rögzítésére.
+* Rendszerezi a bejövő adatokat a központi adatbázisban.
+* **Ügymenet Dosszié (Case History) Kezelése:**
+    * Minden aktív ügymenethez fenntart egy dedikált "Történetfájlt" (pl. `Case_History_[ID].md`) az ügyfél mappájában.
+    * Ide rögzít minden lényeges eseményt emberi nyelven összefoglalva (pl. "Ügyfél kért egyedi árazást", "2 hét szünet után jelentkezett", "Árváltozás történt a várakozás alatt").
+    * Frissíti az Ügyfél adatbázisban az "Utolsó kommunikáció" és "Utolsó lezárt rendelés" dátumokat.
 * **Email Feldolgozási Logika (Idempotencia):**
    * Minden beérkező email egyedi Gmail API azonosítóját (`message_id`) ellenőrzi a "Logs" munkalap `processed_ids` oszlopában.
    * Csak azokat az emaileket dolgozza fel, amelyek ID-ja még NEM szerepel a listában.
@@ -81,6 +88,9 @@ CK Google ökoszisztémában dolgozik. A fő kommunikációs eszköze a GMail, a
 * **Döntéstámogatás:**
     * A rizikók és lehetséges kimenetelek alapján döntési opciókat vázol fel CK számára.
     * Javaslatot tesz a folyamattól való eltérésre, ha a szituáció megkívánja, de önállóan nem tér el a szabályoktól.
+* **Kontextuális Memória:**
+    * Mielőtt válaszol CK-nak egy üggyel kapcsolatban, kötelezően elolvassa a hozzá tartozó "Ügymenet Dossziét", hogy tisztában legyen az előzményekkel.
+    * Kérésre azonnali, narratív összefoglalót ad bármelyik ügy teljes történetéről (nem csak a státuszról, hanem a "sztoriról" is).
 
 ## 3.2 Elvárás
 A csapat **a Team Lead Agent vezetésével** naprakész minden ügymenetről. A Team Lead tanácsokat ad, riportokat prezentál a Streamlit Dashboardon, összeállítja a napi teendők listáját, és megválaszolja a felmerülő kérdéseket.
@@ -107,12 +117,14 @@ A megoldásnak teljesen ingyenes, lokálisan futtatható technológiákra kell �
 >>>>>>> d1deef4 (First version created together with Gemini)
 
 ### 3.3.2 Adattárolás és Backend (Database)
-* **Adatbázis:** Egy központi **Google Spreadsheet** (Master Status File).
-    * Minden Agent ezt olvassa és írja.
-    * Munkalapok: *Active_Cases*, *Clients*, *Logs*, *Config*.
+* **Adatbázis:** A rendszer két fő Google Spreadsheetet használ:
+    1.  **Master Status File:** A folyamatban lévő ügyek (Active_Cases) és a rendszerkonfiguráció (Config) tárolására.
+    2.  **Master Data Database (Törzsadatok):** Ez tartalmazza a statikus üzleti adatokat, amelyeket CK manuálisan is bővíthet.
+        * **Clients (Ügyfelek) munkalap:** *Cégnév | Kapcsolattartó név | Email | Telefonszám | Egyéb email | Utolsó kommunikáció dátuma | Utolsó lezárt rendelés dátuma | Megjegyzés*.
+        * **Products (Termékek) munkalap:** *Gyártó | Terméknév | Termék Azonosító (SKU) | Megjegyzés*.
 * **Fájltárolás:** Google Drive mappastruktúra.
     * Automatikusan létrehozott ügyfélmappák.
-    * **Archívum Mappa:** Egy dedikált "Reports" mappa, ahová a rendszer a napi riportokat menti dátum szerinti elnevezéssel (`YYYY-MM-DD_Briefing.md`).
+    * **Archívum Mappa:** Egy dedikált "Reports" mappa a napi .md riportoknak.
 * **Kapcsolat:** Az alkalmazás Google Service Accounton vagy OAuth2 kliensen keresztül kommunikál a Drive/Gmail API-val.
 * **Integráció:** `google-api-python-client` és `streamlit` könyvtárak használata.
 
@@ -127,6 +139,7 @@ A megoldásnak teljesen ingyenes, lokálisan futtatható technológiákra kell �
     * **Titkosított Tárolás:** Kizárólag a jelszavak egyirányú, kriptográfiailag erős **hash-elt lenyomatát** (pl. bcrypt) szabad tárolni a lokális `secrets.toml` fájlban.
     * **Jogosultságok Hozzárendelése:** A felhasználói szerepköröket (`admin` vs `user`) szintén ebben a védett konfigurációs fájlban (`secrets.toml`) kell hozzárendelni a felhasználónevekhez.
     * **Git Exclusion:** A jelszavakat és jogosultságokat tartalmazó fájlt (`secrets.toml`) kötelező hozzáadni a `.gitignore` fájlhoz, így biztosítva, hogy a hitelesítési adatok véletlenül se kerüljenek feltöltésre vagy megosztásra.
+* **Jelszó Módosítási Protokoll:** Biztonsági okokból a Streamlit felületen keresztül **nem lehetséges** a jelszavak módosítása. A jelszavak cseréje kizárólag a `secrets.toml` fájl manuális szerkesztésével (új hash generálásával) történhet, amit csak a fájlrendszerhez hozzáférő Adminisztrátor végezhet el.
 
 ### 3.3.4 LLM Biztonság és Prompt Injection Védelem
 * **Bemeneti Adatok Sanitizálása:** Az Adatkezelő Agentnek minden bejövő email tartalmát "raw data"-ként kell kezelnie. Tilos a bejövő szöveget közvetlen utasításként végrehajtani.
@@ -169,4 +182,106 @@ A szoftver architektúráját úgy kell kialakítani, hogy az a későbbiekben k
 * **Konfiguráció-vezérelt UI:** Mivel a UI szerkezete a `ui_config.json`-ben van tárolva, új menüpontok vagy funkciók hozzáadása nagyrészt konfigurációs módosítást igényeljen, ne mély kódváltoztatást.
 * **API First:** Mivel minden adatkezelés a Google API-kon keresztül zajlik, a rendszer később könnyen integrálható más, külső szoftverekkel is.
 
->>>>>>> d1deef4 (First version created together with Gemini)
+## 7. Alapértelmezett Üzleti Folyamat (Default Workflow)
+A rendszer telepítésekor az alábbi standard folyamatot kell alapértelmezettként kezelni (amely a `ui_config.json` vagy egy külön `workflow.json` fájlban szerkeszthető):
+
+1.  **Beérkező Érdeklődés (New Lead):** Új email feldolgozása, ügyfél azonosítása/létrehozása.
+2.  **Igényfelmérés / Specifikáció:** Pontos termékigény tisztázása (ha hiányos).
+3.  **Árajánlat Készítés (Quoting):** Beszállítói ár ellenőrzése + Árrés -> Ajánlat küldése CK jóváhagyásával.
+4.  **Megrendelés (Order Placed):** Ügyfél elfogadta -> Beszállítói rendelés leadása.
+5.  **Szállítás / Várakozás (In Transit):** Áru úton van a külső raktárból. (Rizikófigyelés: késés esetén jelzés).
+6.  **Teljesítés és Számlázás (Fulfillment):** Áru megérkezett a vevőhöz -> Számla kiállítása (vagy jelzés a könyvelésnek).
+7.  **Lezárás (Closed):** Ügyfél visszajelzése, dosszié archiválása, "Utolsó rendelés" dátum frissítése.
+
+**Szabály:** Az Elemző Agent minden ügyet ezen a létrán próbál elhelyezni. Ha egy email nem illik a sorba, a "Kivételkezelés" státuszba teszi, és jelzi CK-nak.
+
+## 7. Alapértelmezett Üzleti Folyamat és Státuszlogika (Workflow Engine)
+A rendszer telepítésekor az alábbi folyamatot kell alapértelmezettként kezelni. A folyamat definícióját és az átmeneti szabályokat a rendszernek a `workflow.json` konfigurációs fájlban kell tárolnia, hogy azok később módosíthatóak legyenek.
+
+### 7.1 Folyamat Vizualizáció (Mermaid)
+Az Agentnek az alábbi diagram alapján kell felépítenie a logikát:
+
+```mermaid
+graph TD
+    A[1. Beérkező Érdeklődés] -->|Adatok rendben| B[2. Igényfelmérés]
+    B -->|Specifikáció kész| C[3. Árajánlat Készítés]
+    C -->|Elfogadva| D[4. Megrendelés]
+    C -->|Módosítás kérése| B
+    D -->|Rendelés leadva| E[5. Szállítás / Várakozás]
+    E -->|Áru megérkezett| F[6. Teljesítés és Számlázás]
+    F -->|Pénzügyileg rendezve| G[7. Lezárás]
+    
+    %% Globális kivételek
+    A -.->|Elutasítva| X[8. Kivétel / Elvesztett]
+    B -.->|Elutasítva| X
+    C -.->|Elutasítva| X
+    D -.->|Visszamondva| X
+
+```
+
+### 7.2 Státuszátmeneti Szabályok (Transition Logic)
+* **"Happy Path" (Normál ügymenet):** Az Agentek automatikusan mindig a következő logikus lépést javasolják a nyilak mentén.
+* **Visszalépés (Rollback):** A rendszernek engedélyeznie kell a visszalépést a korábbi fázisokba (pl. Árajánlatból vissza Igényfelmérésbe), ha az ügyfél módosítást kér.
+* **Kézi Felülbírálat (Manual Override):** Bár az Agentek a nyilakat követik, a **Team Lead Agent (CK utasítására)** jogosult bármelyik ügymenetet bármelyik státuszba kényszeríteni (pl. adminisztrációs hiba javítása miatt).
+
+### 7.3 Státuszok Részletes Definíciója
+Az Elemző Agent az alábbi definíciók alapján sorolja be az ügyeket:
+1.  **Beérkező Érdeklődés (New Lead):** Új email érkezett, az ügyfél azonosítása vagy létrehozása folyamatban van.
+2.  **Igényfelmérés (Specifying):** Az ügyféllel való egyeztetés zajlik a pontos termékigényről. Hiányzik még valamilyen információ az ajánlathoz.
+3.  **Árajánlat Készítés (Quoting):** Az igény tiszta, a beszállítói ár ellenőrzése és az ajánlat kiküldése zajlik (vagy az ügyfél visszajelzésére várunk).
+4.  **Megrendelés (Ordered):** Az ügyfél elfogadta az ajánlatot, a beszállítói rendelés leadása folyamatban van.
+5.  **Szállítás / Várakozás (In Transit):** Az áru megrendelve, úton van a külső raktárból a vevőhöz. (Rizikófigyelés aktív: késések nyomon követése).
+6.  **Teljesítés és Számlázás (Fulfillment):** Az áru megérkezett, átadásra került. Számla kiállítása vagy pénzügyi rendezés ellenőrzése zajlik.
+7.  **Lezárás (Closed):** A folyamat sikeresen befejeződött, az ügyfél elégedett, a dosszié archiválva.
+8.  **Kivétel (Exception/Lost):** Elvesztett üzlet, visszamondott rendelés, vagy olyan egyedi probléma, ami emberi beavatkozást igényel.
+
+## 8. Telepítési és Üzemeltetési Dokumentáció (User Manual Spec)
+A fejlesztés részeként az Agentnek létre kell hoznia egy részletes, laikusok számára is érthető `TELEPITESI_UTMUTATO.md` fájlt. Ennek tartalmaznia kell az alábbi pontokat:
+
+### 8.1 Előfeltételek és Beszerzési Lista (Prerequisites)
+A rendszer működéséhez CK-nak be kell szereznie és elő kell készítenie az alábbiakat:
+
+1.  **Google Gemini API Kulcs (Az "Agy"):**
+    * **Cél:** Ez biztosítja az intelligenciát az Agentek számára.
+    * **Beszerzés:** [Google AI Studio](https://aistudio.google.com/) -> "Get API Key".
+    * **Költség:**
+        * *Ingyenes csomag:* Tesztelésre alkalmas (korlátozott sebesség).
+        * *Pay-as-you-go (Ajánlott):* Használat alapú számlázás. Várható költség normál használat mellett: **kb. 5-15 USD / hó**.
+    * **Beillesztés:** A kulcsot a `secrets.toml` fájl `GOOGLE_API_KEY` sorába kell másolni.
+
+2.  **Google Cloud Hozzáférés (A "Környezet"):**
+    * **Cél:** Hozzáférés a Gmailhez, Drive-hoz és Sheets-hez programból.
+    * **Beszerzés:** Google Cloud Console -> Új Projekt -> Gmail, Drive, Sheets API-k engedélyezése -> Service Account létrehozása -> JSON kulcs letöltése.
+    * **Költség:** A Google Workspace API használata ezen a szinten **Ingyenes**. (A meglévő Workspace előfizetésen felül nem jelent költséget).
+    * **Beillesztés:** A letöltött fájlt át kell nevezni `credentials.json`-re és a projekt gyökérmappájába másolni.
+
+3.  **Python Környezet (A "Motor"):**
+    * **Cél:** A kód futtatása a saját gépen.
+    * **Beszerzés:** Hivatalos Python telepítő letöltése és telepítése (az útmutatónak tartalmaznia kell a linket).
+    * **Költség:** **Ingyenes** (Open Source).
+
+### 8.2 Konfiguráció és Első Indítás
+Az útmutatónak lépésről lépésre ("kattintásról kattintásra") le kell írnia:
+1.  Hogyan kell megnyitni a `secrets.toml` fájlt (amit a rendszer generál sablonként).
+2.  Hogyan kell beállítani a **Jelszót** és a **Felhasználónevet** (Admin/User).
+3.  Hogyan kell elindítani a `run_coolkonyha.bat` fájlt.
+4.  Hogyan kell megnyitni a böngészőben a megjelenő `localhost` címet.
+
+### 8.3 Becsült Havi Költségvetés (Cost Calculator)
+A dokumentáció végén szerepeljen egy becslés a fenntartási költségekről:
+* **Szoftver licensz:** 0 Ft (Saját tulajdonú kód).
+* **Szerver/Hosting:** 0 Ft (Saját gépen fut).
+* **AI Használat (Google Gemini):** ~2.000 - 6.000 Ft / hó (forgalomtól függően).
+* **Google Workspace:** Meglévő előfizetés (nincs extra költség).
+* **Összesen:** **kb. 5.000 Ft / hó** üzemeltetési költség.
+
+### 8.4 Hibaelhárítás és "Vészhelyzet" (Troubleshooting)
+Az útmutatónak tartalmaznia kell a megoldást a leggyakoribb problémákra:
+1.  **Elfelejtett Jelszó (Password Reset):**
+    * Mivel a rendszer nem küld emailt, a visszaállítás manuális.
+    * **Lépések:**
+        1. Állítsd le a futó programot.
+        2. Töröld ki (vagy nevezd át) a `secrets.toml` fájlt a mappából.
+        3. Indítsd el újra a `run_coolkonyha.bat`-ot.
+        4. A rendszer érzékeli a konfiguráció hiányát, és "Első indítás" módban kéri az új Admin jelszó megadását.
+2.  **API Hiba:** Ha a Gemini vagy a Google Drive nem válaszol, ellenőrizd az internetkapcsolatot és a `credentials.json` érvényességét.
