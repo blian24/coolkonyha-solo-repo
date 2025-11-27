@@ -28,19 +28,21 @@ CK Google ökoszisztémában dolgozik. A fő kommunikációs eszköze a GMail, a
 
 #### 3.1.1.1 Adatkezelő Agent (Data Handler)
 * Kezeli a Google API-kat (Gmail olvasás, Drive fájlkezelés, Sheet írás/olvasás).
-* **Adatgazdagítás (Data Enrichment):**
-    * Minden bejövő emailnél és ügymenetnél automatikusan kikeresi a "Master Data Database"-ből a kapcsolódó Ügyfél és Termék részletes adatait.
-    * Ha új, ismeretlen email címet talál, javaslatot tesz a Team Leadnek az új ügyfél rögzítésére.
+* **Adatgazdagítás és Zajszűrés (Smart Filtering):**
+    * Minden bejövő emailnél automatikusan kikeresi a "Master Data Database"-ből a kapcsolódó Ügyfél és Termék adatait.
+    * **Ismeretlen feladó kezelése:** Ha az email címe nem szerepel az adatbázisban, az Agent tartalmi elemzést végez:
+        * **Releváns (Üzleti):** Ha a levél tárgya/tartalma importtal, rendeléssel kapcsolatos, javaslatot tesz a Team Leadnek az új ügyfél rögzítésére.
+        * **Irreleváns (Zaj):** A hírleveleket, spam-gyanús, promóciós vagy egyértelműen magánjellegű leveleket "Skipped/Irrelevant" státusszal bejegyzi a Logba, de **NEM** indít hozzájuk ügymenetet és nem zavarja vele a Team Leadet.
 * Rendszerezi a bejövő adatokat a központi adatbázisban.
 * **Ügymenet Dosszié (Case History) Kezelése:**
     * Minden aktív ügymenethez fenntart egy dedikált "Történetfájlt" (pl. `Case_History_[ID].md`) az ügyfél mappájában.
-    * Ide rögzít minden lényeges eseményt emberi nyelven összefoglalva (pl. "Ügyfél kért egyedi árazást", "2 hét szünet után jelentkezett", "Árváltozás történt a várakozás alatt").
+    * Ide rögzít minden lényeges eseményt emberi nyelven összefoglalva.
     * Frissíti az Ügyfél adatbázisban az "Utolsó kommunikáció" és "Utolsó lezárt rendelés" dátumokat.
 * **Email Feldolgozási Logika (Idempotencia):**
    * Minden beérkező email egyedi Gmail API azonosítóját (`message_id`) ellenőrzi a "Logs" munkalap `processed_ids` oszlopában.
    * Csak azokat az emaileket dolgozza fel, amelyek ID-ja még NEM szerepel a listában.
-   * Sikeres feldolgozás után azonnal beírja az email ID-ját a naplóba, így elkerülhető a duplikáció és biztosított, hogy minden levél sorra kerül.
-   * Ha egy feldolgozás során hiba történik, az ID nem kerül be a listába, így a következő futáskor újra megpróbálja (retry mechanizmus).
+   * Sikeres feldolgozás (vagy sikeres zajszűrés) után azonnal beírja az email ID-ját a naplóba. **Fontos:** A kiszűrt/irreleváns levelek ID-ját is rögzíteni kell "Feldolgozott"-ként, hogy a rendszer a következő futáskor ne vizsgálja őket újra.
+   * Ha egy feldolgozás során technikai hiba történik, az ID nem kerül be a listába, így a következő futáskor újra megpróbálja (retry mechanizmus).
 
 #### 3.1.1.2 Elemző Agent
 * A központi adatbázis alapján megállapítja a státuszokat.
