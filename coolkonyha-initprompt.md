@@ -1,3 +1,5 @@
+COMMIT TEST
+
 # Cool Konyha probléma és megoldása
 ## 1. Alapszituáció ismertetése
 Van egy ügyfelem, aki külföldről importált termékeket forgalmaz. A termékek számára nem állnak rendelkezésre helyi raktárban, azokat mindig egy külsős raktárból szállíttattja a vele szerződésben álló szállító cégekkel közvetlenül a megrendelőhöz. Az ügyfelem (továbbiakban CK) emailben tartja a kapcsolatot az ügyfeleivel és a teljes üzleti folyamat emailes kommunikáción zajlik az érdeklődéstől a megrendelésen át a teljesítésig, beleértve az utólagos kommunikációt.
