@@ -1,0 +1,16 @@
+{
+    "app_name": "CoolKonyha Assistant",
+    "theme": {
+        "primaryColor": "#FF4B4B",
+        "backgroundColor": "#FFFFFF",
+        "secondaryBackgroundColor": "#F0F2F6",
+        "textColor": "#262730",
+        "font": "sans serif"
+    },
+    "layout": {
+        "sidebar_expanded": true,
+        "show_delta_log": true,
+        "show_action_center": true
+    },
+    "UI_LOCKED": false
+}

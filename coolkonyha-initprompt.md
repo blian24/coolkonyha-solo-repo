@@ -116,7 +116,6 @@ A megoldásnak teljesen ingyenes, lokálisan futtatható technológiákra kell �
     4.  **Action Center:** Jóváhagyásra váró emailek és teendők listája gombokkal (pl. "Küldés jóváhagyása").
     5.  **Riport Archívum:** Lehetőség a korábbi napi jelentések ("Daily Briefings") visszakeresésére dátumválasztó segítségével. A rendszer ilyenkor a kiválasztott dátumhoz tartozó `.md` fájlt tölti be a Google Drive "Reports" mappájából, és jeleníti meg formázva.
     6.  **Intelligens Dátumkijelzés (UX):** A napi riportok megjelenítésekor a felületen az aktuális dátum mellett dinamikusan jelenjen meg a **"(Ma)"** címke a könnyebb azonosíthatóság érdekében. **Fontos:** Ez a kiegészítés kizárólag a UI rétegen létezhet, a mentett fájlokba (logok, .md archívum) és az adatbázisba **tilos** beleírni ezt a szöveges kiegészítést.
->>>>>>> d1deef4 (First version created together with Gemini)
 
 ### 3.3.2 Adattárolás és Backend (Database)
 * **Adatbázis:** A rendszer két fő Google Spreadsheetet használ:

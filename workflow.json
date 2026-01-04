@@ -1,0 +1,25 @@
+{
+  "workflow_name": "CoolKonyha Default Workflow",
+  "version": "1.0",
+  "statuses": [
+    "1. Beérkező Érdeklődés",
+    "2. Igényfelmérés",
+    "3. Árajánlat Készítés",
+    "4. Megrendelés",
+    "5. Szállítás / Várakozás",
+    "6. Teljesítés és Számlázás",
+    "7. Lezárás",
+    "8. Kivétel / Elvesztett"
+  ],
+  "transitions": {
+    "1. Beérkező Érdeklődés": ["2. Igényfelmérés", "8. Kivétel / Elvesztett"],
+    "2. Igényfelmérés": ["3. Árajánlat Készítés", "8. Kivétel / Elvesztett"],
+    "3. Árajánlat Készítés": ["4. Megrendelés", "2. Igényfelmérés", "8. Kivétel / Elvesztett"],
+    "4. Megrendelés": ["5. Szállítás / Várakozás", "8. Kivétel / Elvesztett"],
+    "5. Szállítás / Várakozás": ["6. Teljesítés és Számlázás"],
+    "6. Teljesítés és Számlázás": ["7. Lezárás"],
+    "7. Lezárás": [],
+    "8. Kivétel / Elvesztett": []
+  },
+  "mermaid_diagram": "graph TD\n    A[1. Beérkező Érdeklődés] -->|Adatok rendben| B[2. Igényfelmérés]\n    B -->|Specifikáció kész| C[3. Árajánlat Készítés]\n    C -->|Elfogadva| D[4. Megrendelés]\n    C -->|Módosítás kérése| B\n    D -->|Rendelés leadva| E[5. Szállítás / Várakozás]\n    E -->|Áru megérkezett| F[6. Teljesítés és Számlázás]\n    F -->|Pénzügyileg rendezve| G[7. Lezárás]\n    \n    %% Globális kivételek\n    A -.->|Elutasítva| X[8. Kivétel / Elvesztett]\n    B -.->|Elutasítva| X\n    C -.->|Elutasítva| X\n    D -.->|Visszamondva| X"
+}
