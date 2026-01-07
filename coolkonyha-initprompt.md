@@ -1,4 +1,4 @@
-COMMIT TEST
+COMMIT TEST 2
 
 # Cool Konyha probléma és megoldása
 ## 1. Alapszituáció ismertetése
